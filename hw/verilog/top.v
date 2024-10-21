@@ -41,14 +41,14 @@ module top(
 	wire stxe;
 	synchronizer txe_sync(
 		.clk(clk),
-		.in(uart_txe),
+		.in(t_uart_txe),
 		.out(stxe)
 	);
 
 	wire srxf;
 	synchronizer rxf_sync(
 		.clk(clk),
-		.in(uart_rxf),
+		.in(t_uart_rxf),
 		.out(srxf)
 	);
 

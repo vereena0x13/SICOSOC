@@ -22,6 +22,27 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     uart_wdata := 0
     uart_wr    := False
     uart_rd    := False
+
+
+    val cfg = SicoConfig(
+        width = 16
+    )
+    val sico = Sico(cfg)
+    import sico.io._
+
+    
+    val ramSize = math.pow(2, cfg.width).toInt
+    val mem = Mem(SInt(cfg.width bits), ramSize)
+    if(initial_memory.isDefined) {
+        assert(initial_memory.get.length <= ramSize)
+        val arr = new ArrayBuffer[BigInt]
+        arr ++= initial_memory.get.map(x => BigInt(x))
+        while(arr.length < ramSize) arr += BigInt(0)
+        mem.initBigInt(arr, true)
+    }
+
+
+    
 }
 
 

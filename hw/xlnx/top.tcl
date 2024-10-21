@@ -1,15 +1,13 @@
-cd vprj
-
 create_project -force -part xc7a100tcsg324-1 top
 
 
-add_files ../gen/SicoSOC.v
-add_files ../verilog/top.v
-#add_files ../verilog/soc_mmcm.v
-add_files ../verilog/synchronizer.v
+add_files ../../gen/SicoSOC.v
+add_files ../../verilog/top.v
+#add_files ../../verilog/soc_mmcm.v
+add_files ../../verilog/synchronizer.v
 
 
-read_xdc top.xdc
+read_xdc ../top.xdc
 synth_design -top top 
 
 
