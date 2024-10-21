@@ -11,14 +11,6 @@ module top(
 
 	wire clk = t_clk;
 
-	/*
-	soc_mmcm mmcm(
-		.clk_in(t_clk),
-		.reset(~t_rst),
-		.clk_out(clk)
-	);
-	*/
-
 
 	wire srst;
 	synchronizer rst_sync(

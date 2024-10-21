@@ -42,7 +42,7 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     }
 
 
-    
+       
 }
 
 
