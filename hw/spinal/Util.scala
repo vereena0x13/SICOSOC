@@ -11,6 +11,7 @@ object Util {
     def spinalConfig(): SpinalConfig = SpinalConfig(
         targetDirectory = "hw/gen",
         onlyStdLogicVectorAtTopLevelIo = true,
+        mergeAsyncProcess = true,
         defaultClockDomainFrequency = FixedFrequency(100 MHz),
         device = Device(
             vendor = "xilinx",

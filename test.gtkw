@@ -1,0 +1,58 @@
+[*]
+[*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
+[*] Tue Oct 22 01:56:07 2024
+[*]
+[dumpfile] "/run/media/vereena/ldata/Projects_New/playground/SICOSOC/simWorkspace/SicoSOC/test/wave.vcd"
+[dumpfile_mtime] "Tue Oct 22 01:52:02 2024"
+[dumpfile_size] 86723
+[savefile] "/run/media/vereena/ldata/Projects_New/playground/SICOSOC/test.gtkw"
+[timestart] 167
+[size] 2550 1355
+[pos] -1 -1
+*-2.195626 184 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.SicoSOC.
+[sst_width] 310
+[signals_width] 519
+[sst_expanded] 1
+[sst_vpaned_height] 421
+@28
+TOP.reset
+TOP.clk
+@200
+-
+@24
+TOP.SicoSOC.sico_1.state[4:0]
+@28
+TOP.SicoSOC.sico_1.advance
+@200
+-
+@24
+TOP.SicoSOC.sico_1.regs_ip[15:0]
+TOP.SicoSOC.sico_1.regs_a[15:0]
+TOP.SicoSOC.sico_1.regs_b[15:0]
+TOP.SicoSOC.sico_1.regs_c[15:0]
+TOP.SicoSOC.sico_1.t0[15:0]
+TOP.SicoSOC.sico_1.t1[15:0]
+TOP.SicoSOC.sico_1.sub[15:0]
+@29
+TOP.SicoSOC.sico_1.br
+@200
+-
+@24
+TOP.SicoSOC.rd[15:0]
+@28
+TOP.SicoSOC.delayed_cmd_valid
+@200
+-
+@24
+TOP.SicoSOC.sico_1.io_bus_cmd_payload_addr[15:0]
+TOP.SicoSOC.sico_1.io_bus_cmd_payload_data[15:0]
+@28
+TOP.SicoSOC.sico_1.io_bus_cmd_payload_write
+TOP.SicoSOC.sico_1.io_bus_cmd_valid
+TOP.SicoSOC.sico_1.io_bus_cmd_ready
+@200
+-
+[pattern_trace] 1
+[pattern_trace] 0
