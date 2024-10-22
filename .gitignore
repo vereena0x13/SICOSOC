@@ -3,6 +3,7 @@
 .metals
 .vscode
 *.bin
+*.gtkw
 project
 simWorkspace
 target
