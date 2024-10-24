@@ -10,6 +10,10 @@ local string_format = string.format
 
 local bit_band 		= bit.band
 
+local io_read		= io.read
+local io_write 		= io.write
+local io_flush 		= io.write
+
 
 local DATA_WIDTH 	= 16
 local DATA_MAX_VAL  = math.pow(2, DATA_WIDTH)
@@ -35,16 +39,21 @@ function runSICO(code, maxIters)
 		end
 
 		self.read = function(addr)
-			if devices[addr + 1] ~= nil then
-				return bit_band(devices[addr + 1].read(addr), 0xFFFF)
+			addr = bit_band(addr, 0xFFFF)
+			local dev = devices[addr + 1]
+			if dev ~= nil then
+				return dev.read(addr)
 			else
 				return memory[addr + 1]
 			end
 		end
 
 		self.write = function(addr, value)
-			if devices[addr + 1] ~= nil then
-				return devices[addr + 1].write(addr, value)
+			addr = bit_band(addr, 0xFFFF)
+			value = bit_band(value, 0xFFFF)
+			local dev = devices[addr + 1]
+			if dev ~= nil then
+				return dev.write(addr, value)
 			else
 				memory[addr + 1] = value
 				return true
@@ -55,7 +64,7 @@ function runSICO(code, maxIters)
 	end
 
 
-	local function interp(bus, start, maxIters)
+	local function sico(bus, start, maxIters)
 		local ip = start
 		if not ip then ip = 0 end
 
@@ -79,7 +88,8 @@ function runSICO(code, maxIters)
 			local c = word()
 			local av = bus.read(a)
 			local bv = bus.read(b)
-			bus.write(a, bit_band(av - bv, 0xFFFF))
+			--print(string_format("%5d %5d %5d %5d %5d", a, b, c, av, bv))
+			bus.write(a, av - bv)
 			if av <= bv then ip = c end
 		end
 	end
@@ -88,14 +98,21 @@ function runSICO(code, maxIters)
 	local bus = Bus()
 
 	bus.add_device({
+		addr = 65534,
+		size = 1,
+		read = function(addr) return string_byte(io_read(1)) end,
+		write = function(addr, value) return false end
+	})
+
+	bus.add_device({
 		addr = 65535,
 		size = 1,
 		read = function(addr) return 0 end,
 		write = function(addr, value)
 			local v = 65536 - value
 			if v < 0 or v >= 255 then return false end
-			io.write(string_char(v))
-			io.flush()
+			io_write(string_char(v))
+			io_flush()
 			return true
 		end
 	})
@@ -104,7 +121,7 @@ function runSICO(code, maxIters)
 		bus.write(i - 1, code[i])
 	end
 
-	interp(bus, 0, maxIters)
+	sico(bus, 0, maxIters)
 end
 
 
@@ -328,6 +345,7 @@ if status and not err then
 
 
 	if args.r then
+		if args.p then print() end
 		local max_iter = nil
 		if args.iters then max_iter = tonumber(args.iters) end
 		runSICO(code, max_iter)

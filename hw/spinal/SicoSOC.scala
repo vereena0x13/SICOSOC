@@ -14,7 +14,7 @@ object SicoSOC {
         val mem = Mem(cfg.dtype(), ramSize)
         if(initial_memory.isDefined) {
             assert(initial_memory.get.length <= ramSize)
-            val arr = new ArrayBuffer[BigInt]
+            val arr = ArrayBuffer[BigInt]()
             arr ++= initial_memory.get.map(x => BigInt(x & 0xFFFF))
             while(arr.length < ramSize) arr += BigInt(0)
             mem.initBigInt(arr, true)
@@ -25,7 +25,7 @@ object SicoSOC {
 
 case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     val io = new Bundle {
-        val uart = new UartBus
+        val uart = UartBus()
     }
     import io._
 
@@ -49,17 +49,19 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     bus.rsp.data  := 0
 
 
-    val is_mmio = bus.cmd.addr === 65535
+    val is_putc = bus.cmd.addr === 65535
+    val is_getc = bus.cmd.addr === 65534
+    val is_mmio = is_putc | is_getc
 
     val rd = mem.readWriteSync(
         address = bus.cmd.addr,
         data    = bus.cmd.data,
-        enable  = bus.cmd.valid && !is_mmio,
+        enable  = bus.cmd.valid & !is_mmio & !clockDomain.readResetWire,
         write   = bus.cmd.write
     )
 
     val delayed_cmd_valid = RegNext(bus.cmd.valid)
-    when(bus.cmd.valid) {
+    when(bus.cmd.valid & !clockDomain.readResetWire) {
         when(is_mmio) {
             when(bus.cmd.write) {
                 when(!uart.txe) {

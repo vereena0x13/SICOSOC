@@ -72,7 +72,7 @@ case class Sico(cfg: SicoConfig) extends Component {
     val br  = t0 <= t1
 
 
-    val state   = Reg(UInt(5 bits)) init(0)
+    val state   = Reg(UInt(4 bits)) init(0)
     val advance = False
 
     var stateID = 0

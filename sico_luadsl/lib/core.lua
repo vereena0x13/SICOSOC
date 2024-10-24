@@ -6,11 +6,14 @@ function jump(addr)
     sble(t0, t0, addr)
 end
 
+function clear(addr)
+    sble(addr, addr)
+end
 
 function set(a, b)
-    sble(t0, t0)
+    clear(t0)
     sble(t0, b)
-    sble(a, a)
+    clear(a)
     sble(a, t0)
 end
 

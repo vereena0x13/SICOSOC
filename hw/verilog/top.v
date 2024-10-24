@@ -19,8 +19,8 @@ module top(
 		.out(srst)
 	);
 
-	reg [32:0] rst_tmr = 32'h0;
-	wire por = rst_tmr != 1000000;
+	reg [7:0] rst_tmr = 8'h0;
+	wire por = rst_tmr != 255;
 	always @(posedge clk) begin
 		if(por) begin
 			rst_tmr <= rst_tmr + 1;

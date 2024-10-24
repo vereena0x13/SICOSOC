@@ -13,6 +13,9 @@ object Util {
         targetDirectory = "hw/gen",
         onlyStdLogicVectorAtTopLevelIo = true,
         mergeAsyncProcess = true,
+        defaultConfigForClockDomains = ClockDomainConfig(
+            resetKind = SYNC  
+        ),
         defaultClockDomainFrequency = FixedFrequency(100 MHz),
         device = Device(
             vendor = "xilinx",
@@ -22,7 +25,7 @@ object Util {
 
     def readShorts(name: String): Array[Short] = {
         val in = new DataInputStream(new FileInputStream(name))
-        val xs = new ArrayBuffer[Short]
+        val xs = ArrayBuffer[Short]()
         while(in.available() > 0) xs += in.readShort()
         in.close()
         xs.toArray
