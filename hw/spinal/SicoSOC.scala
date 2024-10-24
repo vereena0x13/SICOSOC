@@ -61,13 +61,27 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     val delayed_cmd_valid = RegNext(bus.cmd.valid)
     when(bus.cmd.valid) {
         when(is_mmio) {
-            // TODO
-        } elsewhen(!bus.cmd.write) {
-            bus.rsp.data := rd
-        }
+            when(bus.cmd.write) {
+                when(!uart.txe) {
+                    uart.wdata := (65536 - bus.cmd.data)(7 downto 0).asBits
+                    uart.wr := True
 
-        when(delayed_cmd_valid) {
-            bus.cmd.ready := True
+                    when(delayed_cmd_valid) {
+                        bus.cmd.ready := True
+                    }
+                }
+            } otherwise {
+                when(delayed_cmd_valid) {
+                    bus.cmd.ready := True
+                }
+            }
+        } otherwise {
+            when(!bus.cmd.write) {
+                bus.rsp.data := rd
+            }
+            when(delayed_cmd_valid) {
+                bus.cmd.ready := True
+            }
         }
     }
 }
@@ -119,7 +133,7 @@ object SimulateSOC extends App {
             sleep(1)
 
 
-            for(i <- 0 until 1200) {
+            for(i <- 0 until 3000) {
                 clk.clockToggle()
                 sleep(1)
                 clk.clockToggle()

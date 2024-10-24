@@ -11,7 +11,7 @@ function set(a, b)
     sble(t0, t0)
     sble(t0, b)
     sble(a, a)
-    sble(a, tmp)
+    sble(a, t0)
 end
 
 function jeq(a, b, addr)

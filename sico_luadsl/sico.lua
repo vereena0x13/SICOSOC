@@ -66,7 +66,7 @@ function runSICO(code)
 			return x
 		end
 
-		local maxIters = 100000
+		local maxIters = 200
 		while ip >= 0 and ip <= 65535 and maxIters > 0 do
 			maxIters = maxIters - 1
 			local a = word()
@@ -211,7 +211,7 @@ local function Assembler()
 		end
 
 		for i = 1, #code do
-			code[i] = code[i] % 65536 --bit.band(code[i], 0xFFFF)
+			code[i] = bit.band(code[i], 0xFFFF)
 		end
 
 		return code
@@ -312,7 +312,6 @@ if status and not err then
 	local fh = io.open(args.output, "wb")
 	for i = 1, #code do
 		local v = code[i]
-		print(v)
 		local lo = bit.band(v, 0xFF)
 		local hi = bit.band(bit.rshift(v, 8), 0xFF)
 		fh:write(string.char(hi))
