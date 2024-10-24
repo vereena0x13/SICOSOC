@@ -16,7 +16,7 @@ local DATA_WIDTH 	= 16
 local DATA_MAX_VAL  = math.pow(2, DATA_WIDTH)
 
 
-function runSICO(code)
+function runSICO(code, maxIters)
 	local function Bus()
 		local self = {}
 
@@ -56,7 +56,7 @@ function runSICO(code)
 	end
 
 
-	local function interp(bus, start)
+	local function interp(bus, start, maxIters)
 		local ip = start
 		if not ip then ip = 0 end
 
@@ -66,9 +66,15 @@ function runSICO(code)
 			return x
 		end
 
-		local maxIters = 200
-		while ip >= 0 and ip <= 65535 and maxIters > 0 do
-			maxIters = maxIters - 1
+		local itersLeft = maxIters
+		while ip >= 0 and ip <= 65535 do
+			if maxIters and maxIters > 0 then
+				if itersLeft == 0 then
+					break
+				end
+				itersLeft = itersLeft - 1
+			end
+			
 			local a = word()
 			local b = word()
 			local c = word()
@@ -99,7 +105,7 @@ function runSICO(code)
 		bus.write(i - 1, code[i])
 	end
 
-	interp(bus, 0)
+	interp(bus, 0, maxIters)
 end
 
 
@@ -321,7 +327,7 @@ if status and not err then
 
 
 	if args.r then
-		runSICO(code)
+		runSICO(code, 300)
 	end
 else
 	io.write("ERROR: ")

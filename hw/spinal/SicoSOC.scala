@@ -115,7 +115,7 @@ object SimulateSOC extends App {
         }
         .doSim { soc =>
             soc.io.uart.rdata #= 0
-            soc.io.uart.txe   #= true
+            soc.io.uart.txe   #= false
             soc.io.uart.rxf   #= true
 
             
