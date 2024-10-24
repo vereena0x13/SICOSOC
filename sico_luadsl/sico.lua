@@ -1,15 +1,14 @@
 #!/bin/env luajit
 
-local middleclass 	= require "middleclass"
 local argparse 		= require "argparse"
-local pprint		= require "pprint"
-local path 			= require "pl.path"
 
 
 local string_char 	= string.char
 local string_byte 	= string.byte
 local string_sub  	= string.sub
 local string_format = string.format
+
+local bit_band 		= bit.band
 
 
 local DATA_WIDTH 	= 16
@@ -37,7 +36,7 @@ function runSICO(code, maxIters)
 
 		self.read = function(addr)
 			if devices[addr + 1] ~= nil then
-				return bit.band(devices[addr + 1].read(addr), 0xFFFF)
+				return bit_band(devices[addr + 1].read(addr), 0xFFFF)
 			else
 				return memory[addr + 1]
 			end
@@ -80,7 +79,7 @@ function runSICO(code, maxIters)
 			local c = word()
 			local av = bus.read(a)
 			local bv = bus.read(b)
-			bus.write(a, bit.band(av - bv, 0xFFFF))
+			bus.write(a, bit_band(av - bv, 0xFFFF))
 			if av <= bv then ip = c end
 		end
 	end
@@ -94,7 +93,7 @@ function runSICO(code, maxIters)
 		read = function(addr) return 0 end,
 		write = function(addr, value)
 			local v = 65536 - value
-			if v <= 0 or v >= 255 then return false end
+			if v < 0 or v >= 255 then return false end
 			io.write(string_char(v))
 			io.flush()
 			return true
@@ -194,6 +193,7 @@ local function Assembler()
 	end
 
 	self.ascii = function(s)
+		assert(type(s) == "string")
 		local l = self.mark()
 		for i = 1, #s do
 			emit(string_byte(string_sub(s, i, i)))
@@ -210,14 +210,13 @@ local function Assembler()
 	self.assemble = function()
 		for i = 1, #patches do
 			local p = patches[i]
-			local a = p.addr
 			local l = p.label
 			assert(l.addr)
-			code[a] = l.addr	
+			code[p.addr] = l.addr	
 		end
 
 		for i = 1, #code do
-			code[i] = bit.band(code[i], 0xFFFF)
+			code[i] = bit_band(code[i], 0xFFFF)
 		end
 
 		return code
@@ -229,34 +228,29 @@ end
 
 local opts = argparse()
 opts:argument "file"
-	:description "infile"
-opts:option "-o" "--output"
-	:description "outfile"
+	:description "DSL file to generate code from"
+opts:option "-o"
+	:description "File to output generated code to"
+	:argname "<output>"
 	:default "out.bin"
+opts:option "--iters"
+	:description "Max iterations to run; ignored if -r is not specified"
 opts:flag "-p"
+	:description "Print the generated code"
 opts:flag "-r"
+	:description "Run the generated code"
 
 local args = opts:parse()
 
 
 local func, err = loadfile(args.file)
-
 if not func then
+	print("Error loading DSL file '" .. tostring(args.file) .. "':")
 	print(err)
 	return
 end
 
-local asm = Assembler()
-
 local fenv = {
-	label = asm.label,
-	pos = asm.pos,
-	mark = asm.mark,
-	at = asm.at,
-	word = asm.word,
-	sble = asm.sble,
-	ascii = asm.ascii,
-	asciiz = asm.asciiz,
 	string = _G.string,
 	math = _G.math,
 	table = _G.table,
@@ -278,6 +272,15 @@ local fenv = {
 }
 fenv._G = fenv
 
+local asm = Assembler()
+
+for k, v in pairs(asm) do
+	if k ~= "assemble" then fenv[k] = v end
+end
+
+setfenv(func, fenv)
+
+
 local included = {}
 fenv.include = function(file)
 	if included[file] then
@@ -298,14 +301,12 @@ fenv.include = function(file)
 	end
 end
 
-setfenv(func, fenv)
 
 local status, ret, err = xpcall(func, debug.traceback)
 if status and not err then
 	local code = asm.assemble()
 
-	print(string_format("assembled into %d words", #code))
-	print()
+	print(string_format("assembled into %d words\n", #code))
 
 	if args.p then
 		for i = 1, #code do
@@ -315,11 +316,11 @@ if status and not err then
 		io.write('\n')
 	end
 
-	local fh = io.open(args.output, "wb")
+	local fh = io.open(args.o, "wb")
 	for i = 1, #code do
 		local v = code[i]
-		local lo = bit.band(v, 0xFF)
-		local hi = bit.band(bit.rshift(v, 8), 0xFF)
+		local lo = bit_band(v, 0xFF)
+		local hi = bit_band(bit.rshift(v, 8), 0xFF)
 		fh:write(string.char(hi))
 		fh:write(string.char(lo))
 	end
@@ -327,7 +328,9 @@ if status and not err then
 
 
 	if args.r then
-		runSICO(code, 300)
+		local max_iter = nil
+		if args.iters then max_iter = tonumber(args.iters) end
+		runSICO(code, max_iter)
 	end
 else
 	io.write("ERROR: ")
