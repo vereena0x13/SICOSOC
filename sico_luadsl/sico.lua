@@ -58,7 +58,7 @@ function runSICO(code)
 
 	local function interp(bus, start)
 		local ip = start
-		if not start then ip = 0 end
+		if not ip then ip = 0 end
 
 		local function word()
 			local x = bus.read(ip)
@@ -66,7 +66,7 @@ function runSICO(code)
 			return x
 		end
 
-		local maxIters = 200
+		local maxIters = 100000
 		while ip >= 0 and ip <= 65535 and maxIters > 0 do
 			maxIters = maxIters - 1
 			local a = word()
@@ -88,9 +88,11 @@ function runSICO(code)
 		read = function(addr) return 0 end,
 		write = function(addr, value)
 			local v = (-value) % 65536
-			if v <= 0 or v >= 255 then return end
+			print("write to 65535: " .. value .. " " .. v)
+			if v <= 0 or v >= 255 then return false end
 			io.write(string_char(v))
 			io.flush()
+			return true
 		end
 	})
 

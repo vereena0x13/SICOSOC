@@ -8,6 +8,21 @@ import spinal.core.sim._
 import Util._
 
 
+object SicoSOC {
+    private def createRAM(cfg: SicoConfig, initial_memory: Option[Array[Short]]) = {
+        val ramSize = math.pow(2, cfg.width).toInt
+        val mem = Mem(cfg.dtype(), ramSize)
+        if(initial_memory.isDefined) {
+            assert(initial_memory.get.length <= ramSize)
+            val arr = new ArrayBuffer[BigInt]
+            arr ++= initial_memory.get.map(x => BigInt(x & 0xFFFF))
+            while(arr.length < ramSize) arr += BigInt(0)
+            mem.initBigInt(arr, true)
+        }
+        mem
+    }
+}
+
 case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     val io = new Bundle {
         val uart = new UartBus
@@ -27,20 +42,12 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     import sico.io._
 
     
-    val ramSize = math.pow(2, cfg.width).toInt
-    val mem = Mem(cfg.dtype(), ramSize)
-    if(initial_memory.isDefined) {
-        println(initial_memory.get.mkString(", "))
-        assert(initial_memory.get.length <= ramSize)
-        val arr = new ArrayBuffer[BigInt]
-        arr ++= initial_memory.get.map(x => BigInt(x & 0xFFFF))
-        while(arr.length < ramSize) arr += BigInt(0)
-        mem.initBigInt(arr, true)
-    }
+    val mem = SicoSOC.createRAM(cfg, initial_memory)
 
 
     bus.cmd.ready := False
     bus.rsp.data  := 0
+
 
     val is_mmio = bus.cmd.addr === 65535
 
@@ -55,10 +62,8 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
     when(bus.cmd.valid) {
         when(is_mmio) {
             // TODO
-        } otherwise {
-            when(!bus.cmd.write) {
-                bus.rsp.data := rd
-            }
+        } elsewhen(!bus.cmd.write) {
+            bus.rsp.data := rd
         }
 
         when(delayed_cmd_valid) {
@@ -66,6 +71,7 @@ case class SicoSOC(initial_memory: Option[Array[Short]]) extends Component {
         }
     }
 }
+
 
 
 object GenerateSOC extends App {
@@ -112,7 +118,7 @@ object SimulateSOC extends App {
             sleep(1)
 
 
-            for(i <- 0 until 1000) {
+            for(i <- 0 until 1200) {
                 clk.clockToggle()
                 sleep(1)
                 clk.clockToggle()
