@@ -88,7 +88,6 @@ function runSICO(code)
 		read = function(addr) return 0 end,
 		write = function(addr, value)
 			local v = (-value) % 65536
-			print("write to 65535: " .. value .. " " .. v)
 			if v <= 0 or v >= 255 then return false end
 			io.write(string_char(v))
 			io.flush()
@@ -212,7 +211,7 @@ local function Assembler()
 		end
 
 		for i = 1, #code do
-			code[i] = bit.band(code[i], 0xFFFF)
+			code[i] = code[i] % 65536 --bit.band(code[i], 0xFFFF)
 		end
 
 		return code
@@ -313,6 +312,7 @@ if status and not err then
 	local fh = io.open(args.output, "wb")
 	for i = 1, #code do
 		local v = code[i]
+		print(v)
 		local lo = bit.band(v, 0xFF)
 		local hi = bit.band(bit.rshift(v, 8), 0xFF)
 		fh:write(string.char(hi))

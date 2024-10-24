@@ -108,8 +108,8 @@ case class Sico(cfg: SicoConfig) extends Component {
         defFetchState(regs.b, t1, false)
     
         nextState {
-            bus.cmd.addr := regs.a
-            bus.cmd.data := sub
+            bus.cmd.addr  := regs.a
+            bus.cmd.data  := sub
             bus.cmd.write := True
             bus.cmd.valid := True
 

@@ -95,6 +95,7 @@ object SimulateSOC extends App {
             soc.sico.io.bus.cmd.write.simPublic()
             soc.sico.io.bus.cmd.addr.simPublic()
             soc.sico.io.bus.cmd.data.simPublic()
+            soc.mem.simPublic()
             
             soc
         }
@@ -128,10 +129,8 @@ object SimulateSOC extends App {
                    soc.sico.io.bus.cmd.ready.toBoolean &&
                    soc.sico.io.bus.cmd.write.toBoolean &&
                    soc.is_mmio.toBoolean) {
-                    //val v = soc.sico.io.bus.cmd.addr.toInt - soc.sico.io.bus.cmd.data.toInt
-                    //print(v.toChar)
-                    val v = soc.sico.io.bus.cmd.data.toInt
-                    println((65536 - v) + " " + (65536 - v).toChar)
+                    val v = 65536 - (soc.sico.io.bus.cmd.data.toInt & 0xFFFF)
+                    print(v.toChar)
                 }
             }
         }

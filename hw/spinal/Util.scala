@@ -1,4 +1,5 @@
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.Iterator
 import scala.util.Using
 
 import java.io.DataInputStream
@@ -19,8 +20,11 @@ object Util {
         )
     )
 
-    def readShorts(name: String): Array[Short] = 
-        Using(new DataInputStream(new FileInputStream(name))) { din => 
-            Iterator.continually(din.readShort).takeWhile(_ => din.available() > 0).toArray
-        }.get
+    def readShorts(name: String): Array[Short] = {
+        val in = new DataInputStream(new FileInputStream(name))
+        val xs = new ArrayBuffer[Short]
+        while(in.available() > 0) xs += in.readShort()
+        in.close()
+        xs.toArray
+    }
 }
