@@ -12,11 +12,15 @@ def signal_handler(sig, frame):
 
 
 def main():
+    if len(sys.argv) < 2:
+        print("usage: %s <uart>" % sys.argv[0])
+        sys.exit(1)
+
     signal.signal(signal.SIGINT, signal_handler)
 
-    global dev
-    dev = serial.Serial("/dev/ttyUSB0", 3000000)
+    dev = serial.Serial(sys.argv[1], 3000000)
 
+    global should_exit
     while not should_exit:
         x = int.from_bytes(dev.read(1))
         sys.stdout.write(chr(x))
@@ -24,4 +28,6 @@ def main():
     
     dev.close()
 
-main()
+
+if __name__ == "__main__":
+    main()

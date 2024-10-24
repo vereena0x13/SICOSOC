@@ -87,7 +87,7 @@ function runSICO(code)
 		size = 1,
 		read = function(addr) return 0 end,
 		write = function(addr, value)
-			local v = (-value) % 65536
+			local v = 65536 - value
 			if v <= 0 or v >= 255 then return false end
 			io.write(string_char(v))
 			io.flush()
