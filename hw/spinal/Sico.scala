@@ -1,5 +1,7 @@
 import spinal.core._
+import spinal.core.sim._
 import spinal.lib._
+import spinal.lib.fsm._
 
 
 case class SicoConfig(
@@ -43,93 +45,64 @@ case class SicoBus(cfg: SicoConfig) extends Bundle with IMasterSlave {
 case class Sico(cfg: SicoConfig) extends Component {
     import cfg._
 
-
     val io = new Bundle {
-        val bus = master(SicoBus(cfg))
+        val bus                     = master(SicoBus(cfg))
     }
-    import io._
+    import io.bus._
 
 
-    val regs = new Area {
-        val a  = reg()
-        val b  = reg()
-        val c  = reg()
-        val ip = reg()
-    }
-
-
-    bus.cmd.addr := 0
-    bus.cmd.data := 0
-    bus.cmd.write := False
-    bus.cmd.valid := False
-
-
-    val t0 = reg()
-    val t1 = reg()
-
-
-    val sub = t0 - t1
-    val br  = t0 <= t1
-
-
-    val state   = Reg(UInt(4 bits)) init(0)
-    val advance = False
-
-    var stateID = 0
-    def nextStateID(): Int = {
-        var id = stateID
-        stateID += 1
-        return id
-    }
-
-    switch(state) {
-        def nextState(body: => Unit) = is(nextStateID())(body)
-
-        def defFetchState(src: UInt, reg: UInt, incIP: Boolean = true) {
-            nextState {
-                bus.cmd.addr  := src
-                bus.cmd.valid := True
-
-                when(bus.cmd.fire) {
-                    reg := bus.rsp.data
-                    if(incIP) regs.ip := regs.ip + 1
-                    advance := True
-                }
-            }
-            nextState {
-                advance := True
-            }
-        }
-
-        defFetchState(regs.ip, regs.a)
-        defFetchState(regs.ip, regs.b)
-        defFetchState(regs.ip, regs.c)
-        defFetchState(regs.a, t0, false)
-        defFetchState(regs.b, t1, false)
+    cmd.addr                        := 0
+    cmd.data                        := 0
+    cmd.write                       := False
+    cmd.valid.setAsReg() init(False)
     
-        nextState {
-            bus.cmd.addr  := regs.a
-            bus.cmd.data  := sub
-            bus.cmd.write := True
-            bus.cmd.valid := True
 
-            when(bus.cmd.fire) {
-                when(br) {
-                    regs.ip := regs.c
-                }
-                advance := True
+    val a                           = reg()
+    val b                           = reg()
+    val c                           = reg()
+    val ip                          = reg()
+    val t0                          = reg()
+    val t1                          = reg()
+
+    val sub                         = t0 - t1
+    val br                          = t0 <= t1
+
+
+    val fsm                         = new StateMachine {
+        val fetchA                  = new State with EntryPoint
+        val fetchB                  = new State
+        val fetchC                  = new State
+        val fetchT0                 = new State
+        val fetchT1                 = new State
+        val execute                 = new State
+
+        def fetch(src: UInt, reg: UInt, a: State, b: State, incIP: Boolean = true) = a.whenIsActive {
+            cmd.addr            := src
+            cmd.valid           := True
+            when(cmd.fire) {
+                cmd.valid       := False
+                reg             := rsp.data
+                if(incIP) ip    := ip + 1
+                goto(b)
             }
         }
-        nextState {
-            advance := True
-        }
-    }
 
-    when(advance) {
-        when(state === stateID-1) {
-            state := 0
-        } otherwise {
-            state := state + 1
+        fetch(ip, a, fetchA, fetchB)
+        fetch(ip, b, fetchB, fetchC)
+        fetch(ip, c, fetchC, fetchT0)
+        fetch(a, t0, fetchT0, fetchT1, false)
+        fetch(b, t1, fetchT1, execute, false)
+
+        execute.whenIsActive {
+            cmd.addr                := a
+            cmd.data                := sub
+            cmd.write               := True
+            cmd.valid               := True
+            when(cmd.fire) {
+                cmd.valid           := False
+                when(br)(ip := c)
+                goto(fetchA)
+            }
         }
     }
 }
